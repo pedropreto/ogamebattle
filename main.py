@@ -4,18 +4,16 @@
 from classes import *
 import random
 
-ship = Ship.createLightFighter(Ship)
-
 lightfighter_attacker = 1
 heavyfighter_defender = 1
 
 ships_attacker, ships_defender = [], []
 
 for i in range(0, lightfighter_attacker):
-    ships_attacker.append(Ship.createLightFighter(Ship))
+    ships_attacker.append(Ship.createShip(Ship, "Light Fighter"))
 
 for i in range(0, heavyfighter_defender):
-    ships_defender.append(Ship.createHeavyFighter(Ship))
+    ships_defender.append(Ship.createShip(Ship, "Heavy Fighter"))
 
 
 battle = Battle(ships_attacker, ships_defender)
@@ -23,41 +21,38 @@ battle = Battle(ships_attacker, ships_defender)
 battle_shipsAttack = list(ships_attacker)
 battle_shipsDefend = list(ships_defender)
 
+shipsToFireAttacker = list(ships_attacker)
+shipsToFireDefender = list(ships_defender)
 
-while len(battle_shipsAttack) > 0 or len(battle_shipsDefend) > 0:
+while len(shipsToFireAttacker) > 0 or len(shipsToFireDefender) > 0:
     chance = random.random()
-    if chance > 0.5 and len(battle_shipsAttack) > 0:
+    if chance > 0.5 and len(shipsToFireAttacker) > 0:
         # attacker first
         print(f'Attacker shoots!')
         shooter, idx_shooter = battle.chooseShooterShip(battle_shipsAttack)
-        battle_shipsAttack = battle.removeShooter(battle_shipsAttack, idx_shooter)
+
         # choose receiver to be attacked
         receiver, idx_receiver = battle.chooseReceiverShip(ships_defender)
-        battle.shooting(shooter, receiver)
+        ships_defender = battle.shooting(shooter, receiver, ships_defender, idx_receiver)
+        if len(ships_defender) == 0:
+            print('Attacker wins!')
+            break
 
-        RapidFire = True
-        while RapidFire:
-            valueRapidFire = battle.checkRapidFire(shooter, receiver)
+        shipsToFireAttacker = battle.removeToFire(idx_shooter, shipsToFireAttacker)
 
-            if valueRapidFire != 0:
-                chance_reshoot = random.random()
-                if chance_reshoot < (valueRapidFire - 1) / valueRapidFire:
-                    print(f'Attacker shoots!')
-                    receiver, idx_receiver = battle.chooseReceiverShip(ships_defender)
-                    battle.shooting(shooter, receiver)
-                else:
-                    RapidFire = False
-            else:
-                RapidFire = False
-
-    elif chance <= 0.5 and len(battle_shipsDefend) > 0:
+    elif chance <= 0.5 and len(shipsToFireDefender) > 0:
         # defender first
         print(f'Defender shoots!')
         shooter, idx_shooter = battle.chooseShooterShip(battle_shipsDefend)
-        battle_shipsDefend = battle.removeShooter(battle_shipsDefend, idx_shooter)
+
         # choose receiver to be attacked
         receiver, idx_receiver = battle.chooseReceiverShip(ships_attacker)
-        battle.shooting(shooter, receiver)
+        ships_attacker = battle.shooting(shooter, receiver, ships_attacker, idx_receiver)
+        if len(ships_attacker) == 0:
+            print('Defender wins!')
+            break
+
+        shipsToFireDefender = battle.removeToFire(idx_shooter, shipsToFireDefender)
     else:
         pass
 
