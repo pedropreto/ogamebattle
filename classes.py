@@ -22,13 +22,24 @@ class Ship:
         return f'ship:' + self.name + '\nintegrity:' + str(self.integrity) + "\nshield:" + str(self.shield) \
                + "\nattack:" + str(self.attack) + '\n\n'
 
-    def createShip(self, name):
-        integrity_data = {"Light Fighter": 4000, "Heavy Fighter": 10000}
-        shield_data = {"Light Fighter": 10, "Heavy Fighter": 25}
-        attack_data = {"Light Fighter": 500, "Heavy Fighter": 150}
-        rapidfire_data = {"Light Fighter": {"Heavy Fighter": 50},
-                          "Heavy Fighter": {"Light Fighter": 80}}
-        return self(name, integrity_data[name], shield_data[name], attack_data[name], rapidfire_data[name])
+    def createShip(self, name, units, list_ships):
+        integrity_data = {"Light Fighter": 4000, "Heavy Fighter": 10000, "Cruiser": 27000,
+                          "Battleship": 60000, "Battlecruiser": 70000}
+        shield_data = {"Light Fighter": 10, "Heavy Fighter": 25, "Cruiser": 50,
+                       "Battleship": 200, "Battlecruiser": 400}
+        attack_data = {"Light Fighter": 50, "Heavy Fighter": 150, "Cruiser": 400,
+                       "Battleship": 1000, "Battlecruiser": 700}
+        rapidfire_data = {"Light Fighter": {"Heavy Fighter": 3},
+                          "Heavy Fighter": {"Light Fighter": 4},
+                          "Cruiser": None,
+                          "Battleship": None,
+                          "Battlecruiser": None}
+
+        for i in range(1, units + 1):
+            list_ships.append(self(name, integrity_data[name], shield_data[name], attack_data[name],
+                                    rapidfire_data[name]))
+
+        return list_ships
 
 
 class Battle:
@@ -65,10 +76,10 @@ class Battle:
             # after destroying the shield completely, goes for the hull
             receiver.integrity -= remaining_attack
 
-
-    def shooting(self, shooter, receiver, ships_receiver, idx_receiver):
+    def shooting(self, shooter, receiver, ships_receiver, idx_receiver, side):
         # first shot
         self.shot(shooter, receiver)
+        print(f'{side} shoots! {shooter} tries to take down {receiver} of the opponent')
 
         # end of first shot, check if it explodes and exits from battle
         ships_receiver = self.takeShipfromBattle(receiver, idx_receiver, ships_receiver)
@@ -84,10 +95,11 @@ class Battle:
             if valueRapidFire != 0:
                 chance_reshoot = random()
                 if chance_reshoot <= (valueRapidFire - 1) / valueRapidFire:
-                    print(f'Attacker shoots!')
+
                     receiver, idx_receiver = self.chooseReceiverShip(ships_receiver)
 
                     self.shot(shooter, receiver)
+                    print(f'{side} shoots! {shooter} tries to take down {receiver} of the opponent')
 
                     # end of nth shot, check if it explodes and exits from battle
                     ships_receiver = self.takeShipfromBattle(receiver, idx_receiver, ships_receiver)
@@ -115,6 +127,10 @@ class Battle:
             explode_chance = 1 - relative_integrity
             chance = random()
             if chance <= explode_chance:
+                receiver.integrity = 0
+                receiver.shield = 0
+                receiver.attack = 0
+                print(f'{receiver} exploded!')
                 return True
             else:
                 return False
