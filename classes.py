@@ -4,6 +4,37 @@
 from random import *
 
 
+class Defence:
+    def __init__(self, name, integrity, shield, attack, rapidfire):
+        self.name = name
+        self.integrity = integrity
+        self.shield = shield
+        self.attack = attack
+        self.rapidfire = rapidfire
+        self.original_integrity = integrity
+        self.original_shield = shield
+        self.shot = False
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return f'Defence:' + self.name + '\nintegrity:' + str(self.integrity) + "\nshield:" + str(self.shield) \
+               + "\nattack:" + str(self.attack) + '\n\n'
+
+    def createDefence(self, name, units, list_defences):
+        integrity_data = {"Rocket Launcher": 4000}
+        shield_data = {"Rocket Launcher": 10}
+        attack_data = {"Rocket Launcher": 50}
+        rapidfire_data = {"Rocket Launcher": None}
+
+        for i in range(1, units + 1):
+            list_defences.append(self(name, integrity_data[name], shield_data[name], attack_data[name],
+                                    rapidfire_data[name]))
+
+        return list_defences
+
+
 class Ship:
     def __init__(self, name, integrity, shield, attack, rapidfire):
         self.name = name
@@ -19,7 +50,7 @@ class Ship:
         return self.name
 
     def __repr__(self):
-        return f'ship:' + self.name + '\nintegrity:' + str(self.integrity) + "\nshield:" + str(self.shield) \
+        return f'Ship:' + self.name + '\nintegrity:' + str(self.integrity) + "\nshield:" + str(self.shield) \
                + "\nattack:" + str(self.attack) + '\n\n'
 
     def createShip(self, name, units, list_ships):
@@ -29,11 +60,14 @@ class Ship:
                        "Battleship": 200, "Battlecruiser": 400}
         attack_data = {"Light Fighter": 50, "Heavy Fighter": 150, "Cruiser": 400,
                        "Battleship": 1000, "Battlecruiser": 700}
-        rapidfire_data = {"Light Fighter": {"Heavy Fighter": 3},
-                          "Heavy Fighter": {"Light Fighter": 4},
-                          "Cruiser": None,
-                          "Battleship": None,
-                          "Battlecruiser": None}
+        rapidfire_data = {"Light Fighter": {"Espionage Probe": 5, "Solar Satellite": 5},
+                          "Heavy Fighter": {"Small Cargo": 3, "Espionage Probe": 5, "Solar Satellite": 5},
+                          "Cruiser": {"Spionage Probe": 5, "Solar Satellite": 5, "Light Fighter": 6,
+                                      "Rocket Launcher": 10},
+                          "Battleship": {"Spionage Probe": 5, "Solar Satellite": 5},
+                          "Battlecruiser": {"Spionage Probe": 5, "Solar Satellite": 5, "Small Cargo": 3,
+                                            "Large Cargo": 3, "Heavy Fighter": 4, "Cruiser": 4, "Battleship": 7}
+                          }
 
         for i in range(1, units + 1):
             list_ships.append(self(name, integrity_data[name], shield_data[name], attack_data[name],
@@ -50,15 +84,15 @@ class Battle:
     def __str__(self):
         return str(self.attacker) + "vs" + str(self.defender)
 
-    def removeToFire(self, ship_idx, shipsToFire):
-        shipsToFire.pop(ship_idx)
-        return shipsToFire
+    def removeToFire(self, ship_idx, unitsToFire):
+        unitsToFire.pop(ship_idx)
+        return unitsToFire
 
-    def chooseShooterShip(self, listToShoot):
+    def chooseShooterUnit(self, listToShoot):
         idx_shooter = randint(1, len(listToShoot)) - 1
         return listToShoot[idx_shooter], idx_shooter
 
-    def chooseReceiverShip(self, listToReceive):
+    def chooseReceiverUnit(self, listToReceive):
         idx_receiver = randint(1, len(listToReceive)) - 1
         return listToReceive[idx_receiver], idx_receiver
 
@@ -96,7 +130,7 @@ class Battle:
                 chance_reshoot = random()
                 if chance_reshoot <= (valueRapidFire - 1) / valueRapidFire:
 
-                    receiver, idx_receiver = self.chooseReceiverShip(ships_receiver)
+                    receiver, idx_receiver = self.chooseReceiverUnit(ships_receiver)
 
                     self.shot(shooter, receiver)
                     print(f'{side} shoots! {shooter} tries to take down {receiver} of the opponent')
