@@ -13,7 +13,6 @@ class Defence:
         self.rapidfire = rapidfire
         self.original_integrity = integrity
         self.original_shield = shield
-        self.shot = False
 
     def __str__(self):
         return self.name
@@ -22,14 +21,20 @@ class Defence:
         return f'Defence:' + self.name + '\nintegrity:' + str(self.integrity) + "\nshield:" + str(self.shield) \
                + "\nattack:" + str(self.attack) + '\n\n'
 
-    def createDefence(self, name, units, list_defences):
-        integrity_data = {"Rocket Launcher": 4000}
-        shield_data = {"Rocket Launcher": 10}
-        attack_data = {"Rocket Launcher": 50}
+    def createDefence(self, name, units, list_defences, techs):
+        integrity_data = {"Rocket Launcher": 2000}
+        shield_data = {"Rocket Launcher": 20}
+        attack_data = {"Rocket Launcher": 80}
         rapidfire_data = {"Rocket Launcher": None}
 
+        increase_integrity = 1 + techs["Armour Technology"] / 10
+        increase_shield = 1 + techs["Shield Technology"] / 10
+        increase_attack = 1 + techs["Weapon Technology"] / 10
+
         for i in range(1, units + 1):
-            list_defences.append(self(name, integrity_data[name], shield_data[name], attack_data[name],
+            list_defences.append(self(name, integrity_data[name] * increase_integrity,
+                                      shield_data[name] * increase_shield,
+                                      attack_data[name] * increase_attack,
                                     rapidfire_data[name]))
 
         return list_defences
@@ -44,7 +49,6 @@ class Ship:
         self.rapidfire = rapidfire
         self.original_integrity = integrity
         self.original_shield = shield
-        self.shot = False
 
     def __str__(self):
         return self.name
@@ -53,7 +57,7 @@ class Ship:
         return f'Ship:' + self.name + '\nintegrity:' + str(self.integrity) + "\nshield:" + str(self.shield) \
                + "\nattack:" + str(self.attack) + '\n\n'
 
-    def createShip(self, name, units, list_ships):
+    def createShip(self, name, units, list_ships, techs):
         integrity_data = {"Light Fighter": 4000, "Heavy Fighter": 10000, "Cruiser": 27000,
                           "Battleship": 60000, "Battlecruiser": 70000}
         shield_data = {"Light Fighter": 10, "Heavy Fighter": 25, "Cruiser": 50,
@@ -69,20 +73,106 @@ class Ship:
                                             "Large Cargo": 3, "Heavy Fighter": 4, "Cruiser": 4, "Battleship": 7}
                           }
 
+        increase_integrity = 1 + techs["Armour Technology"] / 10
+        increase_shield = 1 + techs["Shield Technology"] / 10
+        increase_attack = 1 + techs["Weapon Technology"] / 10
+
         for i in range(1, units + 1):
-            list_ships.append(self(name, integrity_data[name], shield_data[name], attack_data[name],
+            list_ships.append(self(name, integrity_data[name] * increase_integrity,
+                                   shield_data[name] * increase_shield,
+                                   attack_data[name] * increase_attack,
                                     rapidfire_data[name]))
 
         return list_ships
 
 
 class Battle:
-    def __init__(self, attacker, defender):
-        self.attacker = attacker
-        self.defender = defender
+    def __init__(self, fleet_attacker, fleet_defender, defences):
+        self.fleet_attacker = fleet_attacker
+        self.fleet_defender = fleet_defender
+        self.defences = defences
 
     def __str__(self):
         return str(self.attacker) + "vs" + str(self.defender)
+
+    def battleEvent(self):
+        rounds = 6
+
+        battle_shipsAttack = list(self.fleet_attacker)
+        battle_shipsDefend = list(self.fleet_defender)
+        battle_defences = list(self.defences)
+
+        for j in range(1, rounds + 1):
+            print(f'Round {j} starting!')
+
+            shipsToFireAttacker = list(self.fleet_attacker)
+            shipsToFireDefender = list(self.fleet_defender)
+            defencesToFire = list(self.defences)
+
+            battle_shipsAttack, battle_shipsDefend, defences, winner = self.battleround(battle_shipsAttack,
+                                                                                   battle_shipsDefend, battle_defences,
+                                                                                   shipsToFireAttacker,
+                                                                                   shipsToFireDefender, defencesToFire)
+
+            if winner:
+                break
+
+            print(f'Round {j} ended!')
+
+        if winner:
+            pass
+        else:
+            print(f'\n\nIt\'s a draw!')
+
+    def battleround(self, battle_shipsAttack, battle_shipsDefend, defences, shipsToFireAttacker,
+                    shipsToFireDefender, defencesToFire):
+
+        yetToFire = True
+        winner = False
+        unitsToFireAttacker = shipsToFireAttacker
+        unitsToFireDefender = shipsToFireDefender + defencesToFire
+
+        while yetToFire:
+            chance = random()
+            if chance > 0.5:
+                if len(shipsToFireAttacker) == 0:
+                    continue
+
+                # attacker first
+                side = 'Attacker'
+
+                receivingUnits = battle_shipsDefend + defences
+                unitsToFire = unitsToFireAttacker
+
+            elif chance <= 0.5:
+                if len(shipsToFireDefender) == 0 and len(defencesToFire) == 0:
+                    continue
+
+                # defender first
+                side = 'Defender'
+
+                receivingUnits = battle_shipsAttack
+                unitsToFire = unitsToFireDefender
+
+            else:
+                pass
+
+            shooter, idx_shooter = self.chooseShooterUnit(unitsToFire)
+
+            # choose receiver to be attacked
+            receiver, idx_receiver = self.chooseReceiverUnit(receivingUnits)
+            receivingUnits = self.shooting(shooter, receiver, receivingUnits, idx_receiver, side)
+            if len(receivingUnits) == 0:
+                print(f'\n\n{side} wins!')
+                winner = True
+                break
+
+            unitsToFire = self.removeToFire(idx_shooter, unitsToFire)
+
+            if len(unitsToFireAttacker) == 0 and len(unitsToFireDefender) == 0:
+                yetToFire = False
+
+        return battle_shipsAttack, battle_shipsDefend, defences, winner
 
     def removeToFire(self, ship_idx, unitsToFire):
         unitsToFire.pop(ship_idx)
