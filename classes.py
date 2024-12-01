@@ -134,24 +134,26 @@ class Battle:
 
         while yetToFire:
             chance = random()
-            if chance > 0.5:
+            if chance > 0.5 or len(unitsToFireDefender) == 0:
                 if len(shipsToFireAttacker) == 0:
                     continue
 
                 # attacker first
                 side = 'Attacker'
 
-                receivingUnits = battle_shipsDefend + defences
+                receivingShipUnits = battle_shipsDefend
+                receivingDefenceUnits = defences
                 unitsToFire = unitsToFireAttacker
 
-            elif chance <= 0.5:
+            elif chance <= 0.5 or len(unitsToFireAttacker) == 0:
                 if len(shipsToFireDefender) == 0 and len(defencesToFire) == 0:
                     continue
 
                 # defender first
                 side = 'Defender'
 
-                receivingUnits = battle_shipsAttack
+                receivingShipUnits = battle_shipsAttack
+                receivingDefenceUnits = []
                 unitsToFire = unitsToFireDefender
 
             else:
@@ -160,9 +162,10 @@ class Battle:
             shooter, idx_shooter = self.chooseShooterUnit(unitsToFire)
 
             # choose receiver to be attacked
-            receiver, idx_receiver = self.chooseReceiverUnit(receivingUnits)
-            receivingUnits = self.shooting(shooter, receiver, receivingUnits, idx_receiver, side)
-            if len(receivingUnits) == 0:
+            receiver, idx_receiver = self.chooseReceiverUnit(receivingShipUnits + receivingDefenceUnits)
+            receivingShipUnits, receivingDefenceUnits  = self.shooting(shooter, receiver,
+                                                    receivingShipUnits + receivingDefenceUnits, idx_receiver, side)
+            if len(receivingShipUnits + receivingDefenceUnits) == 0:
                 print(f'\n\n{side} wins!')
                 winner = True
                 break
@@ -200,15 +203,15 @@ class Battle:
             # after destroying the shield completely, goes for the hull
             receiver.integrity -= remaining_attack
 
-    def shooting(self, shooter, receiver, ships_receiver, idx_receiver, side):
+    def shooting(self, shooter, receiver, units_receiver, idx_receiver, side):
         # first shot
         self.shot(shooter, receiver)
         print(f'{side} shoots! {shooter} tries to take down {receiver} of the opponent')
 
         # end of first shot, check if it explodes and exits from battle
-        ships_receiver = self.takeShipfromBattle(receiver, idx_receiver, ships_receiver)
-        if len(ships_receiver) == 0:
-            return ships_receiver
+        units_receiver = self.takeUnitfromBattle(receiver, idx_receiver, units_receiver)
+        if len(units_receiver) == 0:
+            return units_receiver
 
 
         # rapidfire shots
@@ -220,22 +223,22 @@ class Battle:
                 chance_reshoot = random()
                 if chance_reshoot <= (valueRapidFire - 1) / valueRapidFire:
 
-                    receiver, idx_receiver = self.chooseReceiverUnit(ships_receiver)
+                    receiver, idx_receiver = self.chooseReceiverUnit(units_receiver)
 
                     self.shot(shooter, receiver)
-                    print(f'{side} shoots! {shooter} tries to take down {receiver} of the opponent')
+                    print(f'{side} shoots! {shooter} tries to take down {receiver} of the opponent with Rapid Fire')
 
                     # end of nth shot, check if it explodes and exits from battle
-                    ships_receiver = self.takeShipfromBattle(receiver, idx_receiver, ships_receiver)
-                    if len(ships_receiver) == 0:
-                        return ships_receiver
+                    units_receiver = self.takeUnitfromBattle(receiver, idx_receiver, units_receiver)
+                    if len(units_receiver) == 0:
+                        return units_receiver
 
                 else:
                     RapidFire = False
             else:
                 RapidFire = False
 
-        return ships_receiver
+        return units_receiver
 
     def checkRapidFire(self, shooter, receiver):
         if shooter.rapidfire is not None:
@@ -261,8 +264,8 @@ class Battle:
         else:
             return False
 
-    def takeShipfromBattle(self, receiver, idx_receiver, ships_receiver):
+    def takeUnitfromBattle(self, receiver, idx_receiver, units_receiver):
         explodeReceiver = self.shipExplodes(receiver)
         if explodeReceiver:
-            ships_receiver.pop(idx_receiver)
-        return ships_receiver
+            units_receiver.pop(idx_receiver)
+        return units_receiver

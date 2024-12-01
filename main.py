@@ -10,17 +10,17 @@ defences = []
 
 attacker_units = {"Light Fighter": 0,
                   "Heavy Fighter": 0,
-                  "Cruiser": 0,
+                  "Cruiser": 2,
                   "Battleship": 0,
-                  "Battlecruiser": 1}
+                  "Battlecruiser": 0}
 
 defender_units = {"Light Fighter": 0,
-                  "Heavy Fighter": 1,
+                  "Heavy Fighter": 0,
                   "Cruiser": 0,
                   "Battleship": 0,
                   "Battlecruiser": 0}
 
-defence_units = {"Rocket Launcher": 1}
+defence_units = {"Rocket Launcher": 10}
 
 attacker_techs = {"Weapon Technology": 10, "Shield Technology": 10, "Armour Technology": 10}
 defender_techs = {"Weapon Technology": 10, "Shield Technology": 10, "Armour Technology": 10}
